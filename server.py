@@ -1,45 +1,40 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import google.generativeai as genai
 import os
 import requests
 
-
 app = Flask(__name__)
 CORS(app)
-# Configure Gemini AI
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-# Shopify environment variables
-SHOPIFY_STORE = os.getenv("SHOPIFY_STORE")
-SHOPIFY_TOKEN = os.getenv("SHOPIFY_ACCESS_TOKEN")
-SHOPIFY_API_VERSION = os.getenv("SHOPIFY_API_VERSION", "2025-07")
+# Shopify config
+SHOP_NAME = os.getenv("SHOP_NAME")  # e.g., "y4n8mm-1g"
+ACCESS_TOKEN = os.getenv("SHOPIFY_ACCESS_TOKEN")  # e.g., "shpat_..."
 
-# Fetch all products from Shopify
 def get_shopify_products():
-    url = f"{SHOPIFY_STORE}/admin/api/{SHOPIFY_API_VERSION}/products.json"
+    """Fetch products from Shopify and return a dictionary with title as key."""
+    url = f"https://{SHOP_NAME}.myshopify.com/admin/api/2025-07/products.json"
     headers = {
-        "X-Shopify-Access-Token": SHOPIFY_TOKEN,
+        "X-Shopify-Access-Token": ACCESS_TOKEN,
         "Content-Type": "application/json"
     }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return response.json().get("products", [])
-    return []
-
-# Find a product that matches a query
-def find_product(query, products):
-    query_lower = query.lower()
-    for product in products:
-        if product['title'].lower() in query_lower:
-            variant = product['variants'][0] if product['variants'] else {}
-            return {
-                "title": product['title'],
-                "description": product.get('body_html', 'No description available'),
-                "price": variant.get('price', '0.00'),
-                "image": product.get('image', {}).get('src', '')
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        products = {}
+        for product in data.get("products", []):
+            title = product.get("title", "").lower()
+            price = product.get("variants")[0].get("price", "0.00") if product.get("variants") else "0.00"
+            description = product.get("body_html", "No description available.")
+            products[title] = {
+                "title": product.get("title", ""),
+                "price": price,
+                "description": description
             }
-    return None
+        return products
+    except Exception as e:
+        print("Error fetching products:", e)
+        return {}
 
 @app.route("/")
 def home():
@@ -47,25 +42,26 @@ def home():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    data = request.get_json()
-    user_message = data.get("message", "")
-
-    if not user_message:
-        return jsonify({"error": "No message provided"}), 400
-
-    # Step 1: Check Shopify products
+    user_message = request.json.get("message", "").lower()
     products = get_shopify_products()
-    product_info = find_product(user_message, products)
 
-    if product_info:
-        reply = f"Product: {product_info['title']}\nPrice: ${product_info['price']}\nDescription: {product_info['description']}\nImage: {product_info['image']}"
-        return jsonify({"reply": reply})
+    # Handle greetings
+    greetings = ["hi", "hello", "hey", "good morning", "good afternoon", "good evening"]
+    if any(greet in user_message for greet in greetings):
+        return jsonify({"reply": "Hello! 👋 How can I help you today? You can ask me about our products or orders."})
 
-    # Step 2: Fallback to Gemini AI
-    model = genai.GenerativeModel("gemini-pro")
-    response = model.generate_content(user_message)
+    # Check for product queries
+    for name, info in products.items():
+        if name in user_message:
+            return jsonify({
+                "reply": f"Product: {info['title']}\n"
+                         f"Price: ${info['price']}\n"
+                         f"Description: {info['description']}"
+            })
 
-    return jsonify({"reply": response.text})
+    # Fallback response
+    return jsonify({"reply": "Sorry, I didn't understand that. You can ask me about our products or orders."})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port, debug=True)
