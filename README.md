@@ -43,11 +43,6 @@ This project requires the following environment variables:
 - SHOPIFY_STORE=your_store_name.myshopify.com
 - GEMINI_API_KEY=your_gemini_api_key
 
-## 🚀 Deployment
-
-This chatbot is live on Render at:
-👉 https://layerlabs-chatbot.onrender.com
-
 ## 📌 Future Improvements
 
 - Add support for greetings (e.g., "Hello", "Hi")
