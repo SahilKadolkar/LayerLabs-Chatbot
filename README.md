@@ -55,6 +55,5 @@ This chatbot is live on Render at:
 - Expand to handle order tracking and customer FAQs
 
 ## 👨‍💻 Author
-
-LayerLabs
-Powered by Shopify + Flask + Gemini API
+**Sahil Kadolkar**  
+Built with ❤️ using Flask, Shopify API & Gemini AI  
