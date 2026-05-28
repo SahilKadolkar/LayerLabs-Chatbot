@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LayerLabs Chatbot 🤖</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="chat-container">
+    <h2>LayerLabs Chatbot 🤖</h2>
+    <div id="chat-box"></div>
+
+    <div class="input-area">
+      <input type="text" id="user-input" placeholder="Type a message..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    async function sendMessage() {
+      const input = document.getElementById("user-input");
+      const message = input.value.trim();
+      if (!message) return;
+
+      addMessage("You", message);
+      input.value = "";
+
+      const response = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message })
+      });
+
+      const data = await response.json();
+      addMessage("Bot", data.reply || "Error: " + data.error);
+    }
+
+    function addMessage(sender, text) {
+      const chatBox = document.getElementById("chat-box");
+      const msg = document.createElement("div");
+      msg.className = sender.toLowerCase();
+      msg.textContent = `${sender}: ${text}`;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  </script>
+</body>
+</html>
