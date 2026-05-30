@@ -3,7 +3,7 @@
   // ============================================================
   // CONFIG — change this when you deploy to Render
   // ============================================================
-  const BACKEND_URL = "https://layerlabs-chatbot.onrender.com";
+  const BACKEND_URL = "https://layerlabs-ai-chatbot.onrender.com";
   // For local testing use: "http://localhost:8000"
   // ============================================================
 
