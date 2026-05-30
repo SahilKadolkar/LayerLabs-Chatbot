@@ -1,16 +1,10 @@
-<<<<<<< HEAD
 langchain==0.3.25
 langchain-openai==0.3.16
 langchain-community==0.3.23
 openai==1.82.0
-faiss-cpu==1.10.0
+faiss-cpu==1.12.0
 beautifulsoup4==4.13.4
-tiktoken==0.9.0
+tiktoken==0.8.0
 python-dotenv==1.1.0
-=======
-flask
-flask-cors
-google-generativeai
-requests
-gunicorn
->>>>>>> 5aaaf087c7d75d9a57682fdf4468551868c49d28
+fastapi==0.115.12
+uvicorn==0.34.0
