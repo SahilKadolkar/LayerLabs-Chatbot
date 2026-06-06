@@ -71,8 +71,35 @@ def print_queue():
             overdue.append(order["name"])
 
     # Build message
-    today = datetime.now().strftime("%-d %b")
-    lines = [f"🕐 Layerlabs Print Queue — {today}\n"]
+    # Sort all orders oldest first
+    all_orders = []
+    for colour, items in groups.items():
+        for item in items:
+            all_orders.append({
+                "colour": colour,
+                "order_name": item["order_name"],
+                "days": item["days"]
+            })
+    
+    all_orders.sort(key=lambda x: x["days"], reverse=True)
+
+    # Top 11 priority
+    top11 = all_orders[:11]
+    remaining = all_orders[11:]
+
+    # Group top 11 by colour
+    top_groups = {}
+    for item in top11:
+        c = item["colour"]
+        if c not in top_groups:
+            top_groups[c] = []
+        top_groups[c].append(item["order_name"])
+
+    # Group remaining by colour
+    remain_groups = {}
+    for item in remaining:
+        c = item["colour"]
+        remain_groups[c] = remain_groups.get(c, 0) + 1
 
     colour_icons = {
         "Terracotta": "🟠",
@@ -82,22 +109,28 @@ def print_queue():
         "Beige": "🔵",
     }
 
-    total = sum(len(v) for v in groups.values())
-    lines.append(f"📦 Total unfulfilled clocks: {total}\n")
+    today = datetime.now().strftime("%-d %b")
+    lines = [f"🕐 Layerlabs Print Queue — {today}"]
+    total = len(all_orders)
+    lines.append(f"📦 Total pending: {total} clocks\n")
 
-    for colour, items in groups.items():
+    lines.append(f"🖨️ Print TODAY — top 11 (pick your best 9):")
+    for colour, order_names in top_groups.items():
         icon = colour_icons.get(colour, "🔲")
-        order_names = ", ".join(sorted(set(i["order_name"] for i in items)))
-        lines.append(f"{icon} {colour} — {len(items)} unit(s)")
-        lines.append(f"   {order_names}\n")
+        lines.append(f"{icon} {colour} x{len(order_names)} — {', '.join(order_names)}")
+
+    if remaining:
+        lines.append(f"\n⏳ Remaining queue ({len(remaining)} units):")
+        for colour, count in remain_groups.items():
+            icon = colour_icons.get(colour, "🔲")
+            lines.append(f"{icon} {colour} — {count} more")
 
     if overdue:
-        lines.append(f"⚠️ Overdue (10d+): {', '.join(overdue)}")
+        lines.append(f"\n⚠️ Overdue (10d+): {', '.join(overdue)}")
 
     if multi_colour:
-        lines.append(f"\n📌 Ship together (multi-colour orders):")
+        lines.append(f"\n📌 Ship together (multi-colour):")
         for m in multi_colour:
             lines.append(f"   {m}")
 
-    message = "\n".join(lines)
-    return jsonify({"message": message})
+    return {"message": "\n".join(lines)}
