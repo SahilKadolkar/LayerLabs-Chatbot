@@ -3,8 +3,11 @@ from flask_cors import CORS
 import os
 import requests
 
+
 app = Flask(__name__)
 CORS(app)
+from print_queue import print_queue_bp
+app.register_blueprint(print_queue_bp)
 
 # Shopify config
 SHOP_NAME = os.getenv("SHOP_NAME")  # e.g., "y4n8mm-1g"
